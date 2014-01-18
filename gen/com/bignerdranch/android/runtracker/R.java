@@ -26,6 +26,7 @@ public final class R {
     public static final class id {
         public static final int action_settings=0x7f080008;
         public static final int fragmentContainer=0x7f080000;
+        public static final int menu_item_new_run=0x7f080009;
         public static final int run_altitudeTextView=0x7f080004;
         public static final int run_durationTextView=0x7f080005;
         public static final int run_latitudeTextView=0x7f080002;
@@ -41,6 +42,7 @@ public final class R {
     }
     public static final class menu {
         public static final int run=0x7f070000;
+        public static final int run_list_options=0x7f070001;
     }
     public static final class string {
         public static final int action_settings=0x7f050001;
@@ -52,9 +54,11 @@ public final class R {
         public static final int gps_enabled=0x7f050009;
         public static final int latitude=0x7f050003;
         public static final int longitude=0x7f050004;
+        public static final int new_run=0x7f05000c;
         public static final int start=0x7f050007;
         public static final int started=0x7f050002;
         public static final int stop=0x7f050008;
+        public static final int tracking_run=0x7f05000d;
     }
     public static final class style {
         /** 

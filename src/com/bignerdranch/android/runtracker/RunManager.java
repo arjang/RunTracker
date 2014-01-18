@@ -5,23 +5,35 @@ package com.bignerdranch.android.runtracker;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationManager;
 import android.util.Log;
+
+import com.bignerdranch.android.runtracker.RunDatebaseHelper.LocationCursor;
+import com.bignerdranch.android.runtracker.RunDatebaseHelper.RunCursor;
 
 public class RunManager {
 	private static final String TAG = "RunManager";
 	public static final String ACTION_LOCATION = "com.bignerdranch.android.runtracker.ACTION_LOCATION";
 	private static final String TEST_PROVIDER = "TEST_PROVIDER";
+	private static final String PREFS_FILE = "runs";
+	private static final String PREFS_CURRENT_RUN_ID = "RunManager.currentRunId";
 	
 	private static RunManager sRunManager;
 	private Context mAppContext;				//Context of the current state of the app
 	private LocationManager mLocationManager;	//Provide access to the system location services
+	private RunDatebaseHelper mHelper;
+	private SharedPreferences mPrefs;
+	private long mCurrentRunId;
 	
 	//The private constructor forces users to use RunManager.get(Context)
 	private RunManager(Context appContext) {
 		mAppContext = appContext;
 		mLocationManager = (LocationManager) mAppContext.getSystemService(Context.LOCATION_SERVICE);	//This is how you retrieve LocationManager
+		mHelper = new RunDatebaseHelper(mAppContext);
+		mPrefs = mAppContext.getSharedPreferences(PREFS_FILE, Context.MODE_PRIVATE);
+		mCurrentRunId = mPrefs.getLong(PREFS_CURRENT_RUN_ID, -1);
 	}
 	
 	public static RunManager get(Context context) {
@@ -40,7 +52,7 @@ public class RunManager {
 		
 		//Flag indicating that if the described PendingIntent already exists, then simply return null instead of creating it
 		int flags = shouldCreate ? 0 : PendingIntent.FLAG_NO_CREATE;		
-		return PendingIntent.getBroadcast(mAppContext, 0, broadcast, flags);
+		return PendingIntent.getBroadcast(mAppContext, 0, broadcast, flags);	//Retrieve a PendingIntent that will perform a broadcast
 	}
 	
 	/*
@@ -93,5 +105,82 @@ public class RunManager {
 	 */
 	public boolean isTrackingRun() {
 		return getLocationPendingIntent(false) != null;
+	}
+	
+	public boolean isTrackingRun(Run run) {
+		return run != null && run.getId() == mCurrentRunId;
+	}
+	
+	/*
+	 * Saves a new run in SQLite db, start tracking the run and return the instance of the run
+	 */
+	public Run startNewRun() {
+		// Insert a new run into the db
+		Run run = insertRun();
+		// Start tracking the run
+		startTrackingRun(run);
+		return run;
+	}
+	
+	public void startTrackingRun(Run run) {
+		// Keep the ID
+		mCurrentRunId = run.getId();
+		// Store it in sharedPreferences
+		mPrefs.edit().putLong(PREFS_CURRENT_RUN_ID, mCurrentRunId).commit();
+		// Start location update
+		startLocationUpdates();
+	}
+	
+	public void stopRun() {
+		stopLocationUpdates();
+		mCurrentRunId = -1;
+		mPrefs.edit().remove(PREFS_CURRENT_RUN_ID).commit();		//Modifications to Prefs must be down thru the editor
+	}
+	
+	private Run insertRun() {
+		Run run = new Run();
+		run.setId(mHelper.insertRun(run));			//Run id is row id in SQLite table
+		return run;
+	}
+	
+	/*
+	 * Does the work of executing SQL query and providing the plain cursor
+	 * to a new RunCursor
+	 */
+	public RunCursor queryRuns() {
+		return mHelper.queryRuns();
+	}
+	
+	/*
+	 * Insert a location for the currently tracking run
+	 */
+	public void insertLocation(Location loc) {
+		if (mCurrentRunId != -1) {
+			mHelper.insertLocation(mCurrentRunId, loc);
+		} else {
+			Log.e(TAG, "location received with no tracking run" + loc.toString());
+		}
+	}
+	
+	public Run getRun(long id) {
+		Run run = null;
+		RunCursor cursor = mHelper.queryRuns(id);
+		cursor.moveToFirst();
+		// If you got a row, get a run
+		if (!cursor.isAfterLast())
+			run = cursor.getRun();	
+		cursor.close();					//Caller of this method has no access to RunCursor, so must close() before returning
+		return run;
+	}
+	
+	public Location getLastKnownLocationForRun(long runId) {
+		Location location = null;
+		LocationCursor cursor = mHelper.queryLastLocationForRun(runId);
+		cursor.moveToFirst();
+		// If you got a row, get a location
+		if (!cursor.isAfterLast())
+			location = cursor.getLocation();
+		cursor.close();
+		return location;
 	}
 }
