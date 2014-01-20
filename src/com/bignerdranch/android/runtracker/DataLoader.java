@@ -10,9 +10,13 @@ public abstract class DataLoader<D> extends AsyncTaskLoader<D> {
 		super(context);
 	}
 	
+	//Handles a request to start the Loader
 	@Override
 	protected void onStartLoading() {
+		
 		if (mData != null) {
+			// If we currently have a result available, deliver it
+            // immediately.
 			deliverResult(mData);
 		} else {
 			forceLoad();	//Calls superclass's forceLoad() method to go fetch the data
@@ -20,14 +24,15 @@ public abstract class DataLoader<D> extends AsyncTaskLoader<D> {
 	}
 	
 	/*
+	 * Called when there is new data to deliver to the client
 	 * Stash away the new data object and, if the loader is started, call the
-	 * superclass implementation to make the delivery
+	 * superclass implementation to make the delivery/
 	 */
 	@Override
 	public void deliverResult(D data) {
 		mData = data;
-		if (isStarted()) {
-			super.deliverResult(data);
+		if (isStarted()) {					//Return whether this load has been started.
+			super.deliverResult(data);		//Sends the result of the load to the registered listener
 		}
 	}
 }

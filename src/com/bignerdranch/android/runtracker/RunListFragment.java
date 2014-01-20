@@ -1,14 +1,20 @@
 package com.bignerdranch.android.runtracker;
 
 import android.annotation.TargetApi;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.CursorAdapter;
 import android.view.LayoutInflater;
@@ -32,13 +38,14 @@ public class RunListFragment extends ListFragment implements LoaderCallbacks<Cur
 	private Drawable mDefaultColor;
 	private boolean mIsDefaultColorSet;
 	private View mViewOfListItem;
+	private long mRunId;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setHasOptionsMenu(true);
 		// Initalize the loader to load the list of runs
-		getLoaderManager().initLoader(0, null, this);
+		getLoaderManager().initLoader(0, null, this);		//LoaderManager calls "this" to report loader events
 		mIsDefaultColorSet = false;
 	}
 	
@@ -67,31 +74,34 @@ public class RunListFragment extends ListFragment implements LoaderCallbacks<Cur
 			// Restart the loader to get any new run available
 			getLoaderManager().restartLoader(0, null, this);
 		}
-//		else if (START_TRACKING == requestCode) {							//Changes background color if the run is being tracked
-//			Run run = mCursor.getRun();
-//			Resources res = getResources();
-//			PendingIntent pi = PendingIntent
-//					.getActivity(getActivity(), 0, new Intent(getActivity(), RunActivity.class), 0);
-//			NotificationManager notificationManager = 
-//					(NotificationManager) getActivity().getSystemService("notification");
-//			
-//			if (mRunManager.isTrackingRun(run)) {
-//				mViewOfListItem.setBackgroundColor(Color.GREEN);
-//				((RunCursorAdapter) getListAdapter()).notifyDataSetChanged();
-//				Notification notification = new NotificationCompat.Builder(getActivity())
-//					.setTicker(res.getString(R.string.tracking_run))
-//					.setSmallIcon(android.R.drawable.ic_menu_report_image)				//Configure small icon
-//					.setContentTitle(res.getString(R.string.tracking_run))			//Configure the appearance
-//					.setContentText(res.getString(R.string.tracking_run))
-//					.setContentIntent(pi)	//pi will be fired when user presses this notification in the drawer
-//					.build();
-//				
-//				notificationManager.notify(0, notification);
-//			} else {
-//				mViewOfListItem.setBackground(mDefaultColor);
-//				notificationManager.cancelAll();
-//			}	
-//		}
+		else if (START_TRACKING == requestCode) {							//Changes background color if the run is being tracked
+			if (mRunId != -1) {
+				RunLoader runLoader = new RunLoader(getActivity(), mRunId);
+				Run run = runLoader.loadInBackground();
+				Resources res = getResources();
+				PendingIntent pi = PendingIntent
+						.getActivity(getActivity(), 0, new Intent(getActivity(), RunActivity.class), 0);
+				NotificationManager notificationManager = 
+						(NotificationManager) getActivity().getSystemService("notification");
+				
+				if (runLoader.isTrackingRun(run)) {
+					mViewOfListItem.setBackgroundColor(Color.GREEN);
+					((RunCursorAdapter) getListAdapter()).notifyDataSetChanged();
+					Notification notification = new NotificationCompat.Builder(getActivity())
+						.setTicker(res.getString(R.string.tracking_run))
+						.setSmallIcon(android.R.drawable.ic_menu_report_image)				//Configure small icon
+						.setContentTitle(res.getString(R.string.tracking_run))			//Configure the appearance
+						.setContentText(res.getString(R.string.tracking_run))
+						.setContentIntent(pi)		//pi will be fired when user presses this notification in the drawer
+						.build();
+					
+					notificationManager.notify(0, notification);
+				} else {
+					mViewOfListItem.setBackground(mDefaultColor);
+					notificationManager.cancelAll();
+				}	
+			}
+		}
 	}
 	
 	@Override
@@ -100,6 +110,7 @@ public class RunListFragment extends ListFragment implements LoaderCallbacks<Cur
 		Intent intent = new Intent(getActivity(), RunActivity.class);
 		intent.putExtra(RunActivity.EXTRA_RUN_ID, id);
 		startActivityForResult(intent, START_TRACKING);
+		mRunId = id;
 		
 		mViewOfListItem = view;
 		if (!mIsDefaultColorSet) {
@@ -151,6 +162,9 @@ public class RunListFragment extends ListFragment implements LoaderCallbacks<Cur
 		}
 	}
 	
+	/*
+	 * Subclass of CursorAdapter to display the loader's data for listview
+	 */
 	private static class RunCursorAdapter extends CursorAdapter {
 		private RunCursor mRunCursor;
 		

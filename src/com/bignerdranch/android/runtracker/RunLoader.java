@@ -10,8 +10,14 @@ public class RunLoader extends DataLoader<Run> {
 		mRunId = runId;
 	}
 	
+	//This function is called in a background thread and should generate a new
+	//set of data to be published by the Loader
 	@Override
 	public Run loadInBackground() {
 		return RunManager.get(getContext()).getRun(mRunId);		//Asks RunManager for a run with that ID and returns it
+	}
+	
+	public boolean isTrackingRun(Run run) {
+		return RunManager.get(getContext()).isTrackingRun(run);
 	}
 }

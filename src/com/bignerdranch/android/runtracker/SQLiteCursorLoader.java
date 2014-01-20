@@ -43,7 +43,7 @@ public abstract class SQLiteCursorLoader extends AsyncTaskLoader<Cursor> {
 	}
 	
 	/*
-	 * Load the data
+	 * Handles a request to start the Loader
 	 */
 	@Override
 	protected void onStartLoading() {
@@ -57,7 +57,7 @@ public abstract class SQLiteCursorLoader extends AsyncTaskLoader<Cursor> {
 	}
 	
 	/*
-	 * Stop their loader
+	 * Handles a request to stop the Loader.
 	 */
 	@Override
 	protected void onStopLoading() {
@@ -76,7 +76,7 @@ public abstract class SQLiteCursorLoader extends AsyncTaskLoader<Cursor> {
 	}
 	
 	/*
-	 * Resetting the loader
+	 * Handles a request to completely reset the Loader
 	 */
 	@Override
 	public void onReset() {
@@ -85,6 +85,7 @@ public abstract class SQLiteCursorLoader extends AsyncTaskLoader<Cursor> {
 		// Ensure the loader is stopped
 		onStopLoading();
 		
+		// Release the resources
 		if (mCursor != null && !mCursor.isClosed()) {
 			mCursor.close();
 		}

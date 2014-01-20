@@ -65,8 +65,6 @@ public class RunFragment extends Fragment {
 		if (args != null) {
 			long runId = args.getLong(ARG_RUN_ID);
 			if (runId != -1) {
-//				mRun = mRunManager.getRun(runId);
-//				mLastLocation = mRunManager.getLastKnownLocationForRun(runId);	//Get last known location for the current run
 				LoaderManager lm = getLoaderManager();
 				lm.initLoader(LOAD_RUN, args, new RunLoaderCallbacks());
 				lm.initLoader(LOAD_LOCATION, args, new LocationLoaderCallbacks());
@@ -154,7 +152,8 @@ public class RunFragment extends Fragment {
 	}
 	
 	/*
-	 * 
+	 * A subclass of LoaderCallbacks interface for a client to interact with the LoaderManager. 
+	 * LoaderCallbacks implementation is associated with the loader, and will be called when the loader state changes.
 	 */
 	private class RunLoaderCallbacks implements LoaderCallbacks<Run> {
 		
@@ -163,12 +162,19 @@ public class RunFragment extends Fragment {
 			return new RunLoader(getActivity(), args.getLong(ARG_RUN_ID));	//new RunLoader pointing at the fragment's current activity
 		}
 		
+		/*
+		 *  If at the point of this call the caller is in its started state, and the requested loader already exists 
+		 *  and has generated its data, then the system calls onLoadFinished() immediately (during initLoader())
+		 */
 		@Override
-		public void onLoadFinished(Loader<Run> loader, Run run) {
+		public void onLoadFinished(Loader<Run> loader, Run run) {	//Called when a previously created loader has finished its load.
 			mRun = run;
 			updateUI();
 		}
 		
+		// This is called when the last Cursor provided to onLoadFinished()
+	    // above is about to be closed.  We need to make sure we are no
+	    // longer using it.
 		@Override
 		public void onLoaderReset(Loader<Run> loader) {
 			// Do nothing
