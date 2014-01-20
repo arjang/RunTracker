@@ -357,7 +357,7 @@ containing a value of this type.
         public static final int map=0x7f060028;
         public static final int new_run=0x7f060026;
         public static final int run_finish=0x7f06002b;
-        public static final int run_finished_atformat=0x7f06002c;
+        public static final int run_finished_at_format=0x7f06002c;
         public static final int run_start=0x7f060029;
         public static final int run_started_at_format=0x7f06002a;
         public static final int start=0x7f060021;

@@ -118,7 +118,7 @@ int string longitude 0x7f06001e
 int string map 0x7f060028
 int string new_run 0x7f060026
 int string run_finish 0x7f06002b
-int string run_finished_atformat 0x7f06002c
+int string run_finished_at_format 0x7f06002c
 int string run_start 0x7f060029
 int string run_started_at_format 0x7f06002a
 int string start 0x7f060021
